@@ -20,7 +20,18 @@ function fetchData() {
 }
 
 function parseData(response) {
-    console.log("received: "+ response);
+    var bolb = new Blob([JSON.stringify(response)], {type : 'application/json'});
+
+    var downloading = browser.downloads.download({
+        url: URL.createObjectURL(bolb),
+        filename: response.bankName + "-" + response.billTitle,
+        conflictAction: 'uniquify'
+    });
+    downloading.then(() => {
+        console.log("Start downloading");
+    }, () => {
+        console.log("Download failed");
+    })
 }
 
 browser.pageAction.onClicked.addListener(fetchData);
