@@ -16,6 +16,8 @@ function startProcess() {
             ).then(openBillPages)
             .catch(error => console.error("get bill page failed: " + error));
         }
+
+        init = true;
     }).catch(error => console.error('query tabs failed: ' + error));
 }
 
@@ -36,8 +38,11 @@ function openBillPages(res) {
 
 function billPageUpdated(tabId, changeInfo, tabInfo) {
 
+    if(!init) return;
     if(existedTabs.includes(tabId)) return;
     if(changeInfo.status != "complete") return;
+
+    console.log('detected page updated, trying to fetch bill.');
 
     openedTabs.push(tabId);
 
@@ -72,6 +77,7 @@ function parseBillData(billContent) {
 var existedTabs = [];
 var openedTabs = [];
 var totalTabs  = 0;
+var init = false;
 
 browser.pageAction.onClicked.addListener(startProcess);
 browser.tabs.onUpdated.addListener(billPageUpdated);

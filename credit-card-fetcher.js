@@ -4,6 +4,9 @@ function fetchCardData(request){
     let billDoc = document;
 
     let bankNameClass = billDoc.getElementsByClassName('detail_summary_title left bank_name');
+
+    if (bankNameClass.length == 0) return; // Probably it's not the webpage we needed.
+
     let bankName = bankNameClass[0].textContent;
     let cardNameClass = billDoc.getElementsByClassName('detail_summary_number left');
     let cardName = cardNameClass[0].textContent;
