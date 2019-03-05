@@ -1,10 +1,7 @@
-var mainFrame = document.getElementById('mainFrame');
-
 function fetchCardData(request){
-    console.log('message received.');
+    if(request.MessageType != "get-bill-content") return;
 
-    let mainFrame = document.getElementById('mainFrame');
-    let billDoc = mainFrame.contentDocument;
+    let billDoc = document;
 
     let bankNameClass = billDoc.getElementsByClassName('detail_summary_title left bank_name');
     let bankName = bankNameClass[0].textContent;
@@ -36,4 +33,19 @@ function fetchCardData(request){
     return Promise.resolve(bill);
 }
 
+function fetchBillPages(request) {
+    if(request.MessageType != 'get-bill-pages') return;
+
+    let mainFrame = document.getElementById('mainFrame');
+    let billDoc = mainFrame.contentDocument;
+    var pages = billDoc.getElementsByClassName('show_detail');
+
+    var pageList = [];
+    for(let i = 0, l = pages.length; i < l; i++) 
+        pageList.push("https://mail.qq.com" + pages[i].getAttribute('href'));
+        
+    return Promise.resolve({ "BillPages" : pageList});
+}
+
 browser.runtime.onMessage.addListener(fetchCardData);
+browser.runtime.onMessage.addListener(fetchBillPages);

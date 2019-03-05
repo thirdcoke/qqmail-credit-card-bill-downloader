@@ -2,21 +2,39 @@ function onError(error) {
     console.error('Error: ${error}');
 }
 
-function sendMessageToTabs(tabs) {
-    for(let tab of tabs) {
-        browser.tabs.sendMessage(
-            tab.id,
-            "fetch-card-data"
-        ).then(parseData).catch(onError);
-    }
-}
-
-function fetchData() {
+function startProcess() {
     browser.tabs.query({
         currentWindow: true,
         active: true
-    }).then(sendMessageToTabs).catch(onError);
+    }).then(queryBillPageLinks).catch(onError);
+}
 
+function queryBillPageLinks(tabs) {
+    for(let tab of tabs) {
+        browser.tabs.sendMessage(
+            tab.id,
+            { "MessageType" : "get-bill-pages"}
+        ).then(openBillPages).catch(onError);
+    }
+}
+
+function openBillPages(res) {
+    if(res == null) return;
+
+    res.BillPages.forEach(element => {
+        browser.tabs.create(
+            {
+                active: false,
+                url: element 
+            }).then(getBillDataFromEachPage).catch(onError);
+    });
+}
+
+function getBillDataFromEachPage(tabObj){
+    browser.tabs.sendMessage(
+        tabObj.id,
+        { "MessageType" : "get-bill-content"}
+    ).then(parseData).catch(onError);
 }
 
 function parseData(response) {
@@ -31,7 +49,7 @@ function parseData(response) {
         console.log("Start downloading");
     }, () => {
         console.log("Download failed");
-    })
+    });
 }
 
-browser.pageAction.onClicked.addListener(fetchData);
+browser.pageAction.onClicked.addListener(startProcess);
