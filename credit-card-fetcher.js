@@ -22,7 +22,7 @@ function fetchCardData(request){
 
     var bill = {
         "bankName" : bankName,
-        "cardName" : cardName,
+        "cardName" : cardName.substr(cardName.length - 4),
         "billTitle" : billTitle,
         "dateList" : dateArray,
         "detailList" : detailArray,

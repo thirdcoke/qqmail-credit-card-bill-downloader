@@ -1,55 +1,77 @@
 function onError(error) {
-    console.error('Error: ${error}');
+    console.error('Error: ' + error);
 }
 
 function startProcess() {
+    existedTabs = [];
     browser.tabs.query({
         currentWindow: true,
         active: true
-    }).then(queryBillPageLinks).catch(onError);
-}
-
-function queryBillPageLinks(tabs) {
-    for(let tab of tabs) {
-        browser.tabs.sendMessage(
-            tab.id,
-            { "MessageType" : "get-bill-pages"}
-        ).then(openBillPages).catch(onError);
-    }
+    }).then(tabs => {
+        for(let tab of tabs) {
+            existedTabs.push(tab.id);
+            browser.tabs.sendMessage(
+                tab.id,
+                { "MessageType" : "get-bill-pages"}
+            ).then(openBillPages)
+            .catch(error => console.error("get bill page failed: " + error));
+        }
+    }).catch(error => console.error('query tabs failed: ' + error));
 }
 
 function openBillPages(res) {
     if(res == null) return;
 
-    res.BillPages.forEach(element => {
+    console.log("get " + res.BillPages.length + " pages.");
+    totalTabs = res.BillPages.length;
+
+    res.BillPages.forEach(billPageUrl => {
         browser.tabs.create(
             {
                 active: false,
-                url: element 
-            }).then(getBillDataFromEachPage).catch(onError);
-    });
+                url: billPageUrl 
+            }).catch(error => console.error('get bill from each page failed: ' + error));
+        });
 }
 
-function getBillDataFromEachPage(tabObj){
+function billPageUpdated(tabId, changeInfo, tabInfo) {
+
+    if(existedTabs.includes(tabId)) return;
+    if(changeInfo.status != "complete") return;
+
+    openedTabs.push(tabId);
+
     browser.tabs.sendMessage(
-        tabObj.id,
+        tabId,
         { "MessageType" : "get-bill-content"}
-    ).then(parseData).catch(onError);
+    ).then(parseBillData).catch(
+            error => console.error('get bill content error: '+ error)
+        );
 }
 
-function parseData(response) {
-    var bolb = new Blob([JSON.stringify(response)], {type : 'application/json'});
+function parseBillData(billContent) {
+    var bolb = new Blob([JSON.stringify(billContent)], {type : 'application/json'});
 
     var downloading = browser.downloads.download({
         url: URL.createObjectURL(bolb),
-        filename: response.bankName + "-" + response.billTitle,
+        filename: billContent.bankName + "-" + billContent.billTitle + "-" + billContent.cardName,
         conflictAction: 'uniquify'
     });
+
     downloading.then(() => {
-        console.log("Start downloading");
+        console.log("Download completed");
     }, () => {
         console.log("Download failed");
     });
+
+    if(openedTabs.length == totalTabs) {
+        browser.tabs.remove(openedTabs);
+    }
 }
 
+var existedTabs = [];
+var openedTabs = [];
+var totalTabs  = 0;
+
 browser.pageAction.onClicked.addListener(startProcess);
+browser.tabs.onUpdated.addListener(billPageUpdated);
