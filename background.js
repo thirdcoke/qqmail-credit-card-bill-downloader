@@ -64,7 +64,7 @@ function parseBillData(billContent) {
 
     var downloading = browser.downloads.download({
         url: URL.createObjectURL(bolb),
-        filename: billContent.bankName + "-" + billContent.billTitle + "-" + billContent.cardName,
+        filename: billContent.BankName + "-" + billContent.BillMonth,
         conflictAction: 'uniquify'
     });
 
@@ -86,3 +86,15 @@ var init = false;
 
 browser.pageAction.onClicked.addListener(startProcess);
 browser.tabs.onUpdated.addListener(billPageUpdated);
+
+// browser.pageAction.onClicked.addListener(testBlob);
+
+// function testBlob() {
+//     var blob = new Blob(["hello world"]);
+
+//     browser.downloads.download({
+//         url: URL.createObjectURL(blob),
+//         filename: "testFile.txt",
+//         conflictAction: 'uniquify'
+//     })
+// }

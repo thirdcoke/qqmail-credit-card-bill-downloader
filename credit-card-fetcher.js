@@ -1,44 +1,65 @@
+
+// Fetch data on a single page
 function fetchCardData(request){
     if(request.MessageType != "get-bill-content") return;
 
-    let billDoc = document;
-
-    let bankNameClass = billDoc.getElementsByClassName('detail_summary_title left bank_name');
-
-    if (bankNameClass.length == 0) return; // Probably it's not the webpage we needed.
-
+    // Bank name
+    let bankNameClass = document.getElementsByClassName('detail_summary_title left bank_name');
+    if (bankNameClass.length == 0) return Promise.reject("You're probably on the wrong page.");
     let bankName = bankNameClass[0].textContent;
-    let cardNameClass = billDoc.getElementsByClassName('detail_summary_number left');
-    let cardName = cardNameClass[0].textContent;
-    let billTitle = billDoc.getElementsByClassName('bill_title')[0].textContent;
 
-    let dateElements = billDoc.getElementsByClassName('bill_detail_transactiondate');
-    var dateArray = [];
-    for(var i = 0, l = dateElements.length; i < l; i++ ) dateArray.push(dateElements[i].textContent);
+    // Card number long
+    let cardNumberLong = document.getElementsByClassName('detail_summary_number left')[0].textContent;
 
-    let detailsElements = billDoc.getElementsByClassName('bill_detail_description');
-    var detailArray = [];
-    for(var i = 0, l = detailsElements.length; i < l; i++ ) detailArray.push(detailsElements[i].textContent);
+    // Month
+    let billMonth = document.getElementsByClassName('bill_title')[0].textContent;
 
-    let amount = billDoc.getElementsByClassName('bill_detail_amount');
-    let cardTail = billDoc.getElementsByClassName('bill_detail_cardtail');
+    // Transcation date List
+    let transcationElements = document.getElementsByClassName('bill_detail_transactiondate');
+    var transcations = [];
+    for(var i = 0, l = transcationElements.length; i < l; i++ ) transcations.push(transcationElements[i].textContent);
+
+    // Description list
+    let descriptionsElements = document.getElementsByClassName('bill_detail_description');
+    var descriptions = [];
+    for(var i = 0, l = descriptionsElements.length; i < l; i++ ) descriptions.push(descriptionsElements[i].textContent);
+
+    // Amount
+    let amountElements = document.getElementsByClassName('bill_detail_amount');
+    var amount = [];
+    var currency = [];
+    for(var i = 0, l = amountElements.length; i < l; i++) {
+      if(amountElements[i].childNodes.length == 1) {
+        amount.push(amountElements[i].innerText);
+        currency.push("Currency");
+      } else {
+        amount.push(amountElements[i].childNodes[1].nodeValue);
+        currency.push(amountElements[i].childNodes[0].innerText);
+      }
+    }
+
+    // Tail number
+    let cardTailElements = document.getElementsByClassName('bill_detail_cardtail');
+    var cardTails = [];
+    for(var i = 0, l = cardTailElements.length; i < l; i++) cardTails.push(cardTailElements[i].textContent);
 
     var bill = {
-        "bankName" : bankName,
-        "cardName" : cardName.substr(cardName.length - 4),
-        "billTitle" : billTitle,
-        "dateList" : dateArray,
-        "detailList" : detailArray,
-        "amountList" : amount,
-        "cardTailList" : cardTail
+        "BankName" : bankName,
+        "CardNumberLong" : cardNumberLong,
+        "BillMonth" : billMonth,
+        "DateList" : transcations,
+        "DetailList" : descriptions,
+        "AmountList" : amount,
+        "CurrencyList" : currency,
+        "CardTailList" : cardTailElements
     };
     
     return Promise.resolve(bill);
 }
 
-function fetchBillPages(request) {
+function fetchAllBillLinks(request) {
     if(request.MessageType != 'get-bill-pages') return;
-    
+
     let mainFrame = document.getElementById('mainFrame');
     let billDoc = mainFrame.contentDocument;
     var pages = billDoc.getElementsByClassName('show_detail');
@@ -51,7 +72,7 @@ function fetchBillPages(request) {
 }
 
 browser.runtime.onMessage.addListener(fetchCardData);
-browser.runtime.onMessage.addListener(fetchBillPages);
+browser.runtime.onMessage.addListener(fetchAllBillLinks);
 
 function testJson2Csv() {
 
