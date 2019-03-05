@@ -9,7 +9,8 @@
 	"permissions": [
 		"alarms",
 		"tabs",
-		"downloads"
+		"downloads",
+		"activeTab"
 	],
 	"background": {
 		"scripts": ["background.js"]

@@ -3,6 +3,7 @@ function onError(error) {
 }
 
 function startProcess() {
+
     existedTabs = [];
     browser.tabs.query({
         currentWindow: true,
@@ -10,11 +11,15 @@ function startProcess() {
     }).then(tabs => {
         for(let tab of tabs) {
             existedTabs.push(tab.id);
-            browser.tabs.sendMessage(
-                tab.id,
-                { "MessageType" : "get-bill-pages"}
-            ).then(openBillPages)
-            .catch(error => console.error("get bill page failed: " + error));
+            browser.tabs.executeScript(
+                {file: "/json2csv"}
+            ).then(() => {
+                browser.tabs.sendMessage(
+                    tab.id,
+                    { "MessageType" : "get-bill-pages"}
+                ).then(openBillPages)
+                .catch(error => console.error("get bill page failed: " + error))
+            }).catch(error => console.error(error));
         }
 
         init = true;
