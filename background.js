@@ -16,8 +16,11 @@ function startProcess() {
             ).then(() => {
                 browser.tabs.sendMessage(
                     tab.id,
-                    { "MessageType" : "get-bill-pages"}
-                ).then(openBillPages)
+                    { 
+                        "MessageType" : "get-bill-pages",
+                        "TabID" : tab.id
+                    }
+                ).then(createTabsForBills)
                 .catch(error => console.error("get bill page failed: " + error))
             }).catch(error => console.error(error));
         }
@@ -26,11 +29,13 @@ function startProcess() {
     }).catch(error => console.error('query tabs failed: ' + error));
 }
 
-function openBillPages(res) {
+function createTabsForBills(res) {
     if(res == null) return;
 
     console.log("get " + res.BillPages.length + " pages.");
     totalTabs = res.BillPages.length;
+
+    return;
 
     res.BillPages.forEach(billPageUrl => {
         browser.tabs.create(
@@ -76,6 +81,7 @@ function parseBillData(billContent) {
 
     if(openedTabs.length == totalTabs) {
         browser.tabs.remove(openedTabs);
+        openedTabs = [];
     }
 }
 

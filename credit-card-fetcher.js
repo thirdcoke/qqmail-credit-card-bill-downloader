@@ -62,13 +62,31 @@ function fetchAllBillLinks(request) {
 
     let mainFrame = document.getElementById('mainFrame');
     let billDoc = mainFrame.contentDocument;
-    var pages = billDoc.getElementsByClassName('show_detail');
 
-    var pageList = [];
-    for(let i = 0, l = pages.length; i < l; i++) 
-        pageList.push("https://mail.qq.com" + pages[i].getAttribute('href'));
-        
-    return Promise.resolve({ "BillPages" : pageList});
+    // get links for each year
+    /*
+    example json
+    {
+      "2019 bill" : [ JanuaryBillLink, FebuaryBillLink ],
+      "2018 bill" : [ JanuaryBillLink, ... , DecemberBillLink ]
+    }
+    */
+
+    var resList = {};
+    var yearsRows = billDoc.getElementsByClassName('year_row');
+    var monthRows = yearsRows[0].parentNode.getElementsByClassName('month_list');
+
+    for(var i = 0; i < yearsRows.length; i++) {
+      var yearText = yearsRows[i].getElementsByClassName('bill_year')[0].innerText;
+      var detailBillsRows = monthRows[i].getElementsByClassName('show_detail');
+      // resList.push({ yearText : [] });
+      resList[yearText] = [];
+      for(var j = 0; j < detailBillsRows.length; j++) {
+        resList[yearText].push("https://mail.qq.com" + detailBillsRows[j].getAttribute('href'));
+      }
+    }
+   
+    return Promise.resolve({ "BillPages" : resList});
 }
 
 browser.runtime.onMessage.addListener(fetchCardData);
