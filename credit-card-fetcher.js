@@ -43,18 +43,53 @@ function fetchCardData(request){
     var cardTails = [];
     for(var i = 0, l = cardTailElements.length; i < l; i++) cardTails.push(cardTailElements[i].textContent);
 
-    var bill = {
+    /*
+      Example json
+    [
+      {
         "BankName" : bankName,
         "CardNumberLong" : cardNumberLong,
         "BillMonth" : billMonth,
-        "DateList" : transcations,
-        "DetailList" : descriptions,
-        "AmountList" : amount,
-        "CurrencyList" : currency,
-        "CardTailList" : cardTailElements
-    };
-    
-    return Promise.resolve(bill);
+        "Date" : transcation,
+        "Detail" : description,
+        "Amount" : amount,
+        "Currency" : currency,
+        "CardTail" : cardTail
+      },
+      ... and etc.
+    ]
+    */
+
+    var billItems = [];
+    for (var i = 0, l = transcations.length; i < l ; i++ ) {
+      billItems.push(
+        {
+          "BankName" : bankName,
+          "CardNumLong" : cardNumberLong,
+          "BillMonth" : billMonth,
+          "Date" : transcations[i],
+          "Detail" : descriptions[i],
+          "Amount" : amount[i],
+          "Currency" : currency[i],
+          "CardTail" : cardTails[i]
+        }
+      );
+    }
+
+    const Json2CsvParser = json2csv.Parser;
+    const fields = ["BankName", "CardNumLong", "BillMonth", "Date", "Detail", "Amount", "Currency", "CardTail"];
+    const opts = { fields };
+
+    var csv;
+
+    try {
+      const parser = new Json2CsvParser(opts);
+      csv = parser.parse(billItems);
+    } catch (err) {
+      console.error(err);
+    }
+
+    return Promise.resolve({ "TabID" : request.TabID, "CSV" : csv });
 }
 
 function fetchAllBillLinks(request) {
@@ -79,14 +114,13 @@ function fetchAllBillLinks(request) {
     for(var i = 0; i < yearsRows.length; i++) {
       var yearText = yearsRows[i].getElementsByClassName('bill_year')[0].innerText;
       var detailBillsRows = monthRows[i].getElementsByClassName('show_detail');
-      // resList.push({ yearText : [] });
       resList[yearText] = [];
       for(var j = 0; j < detailBillsRows.length; j++) {
         resList[yearText].push("https://mail.qq.com" + detailBillsRows[j].getAttribute('href'));
       }
     }
    
-    return Promise.resolve({ "BillPages" : resList});
+    return Promise.resolve({ "BillDic" : resList});
 }
 
 browser.runtime.onMessage.addListener(fetchCardData);

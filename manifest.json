@@ -10,7 +10,8 @@
 		"alarms",
 		"tabs",
 		"downloads",
-		"activeTab"
+		"activeTab",
+		"<all_urls>"
 	],
 	"background": {
 		"scripts": ["background.js"]

@@ -32,63 +32,77 @@ function startProcess() {
 function createTabsForBills(res) {
     if(res == null) return;
 
-    console.log("get " + res.BillPages.length + " pages.");
-    totalTabs = res.BillPages.length;
-
-    return;
-
-    res.BillPages.forEach(billPageUrl => {
-        browser.tabs.create(
-            {
-                active: false,
-                url: billPageUrl 
-            }).catch(error => console.error('get bill from each page failed: ' + error));
+    for (var year in res.BillDic) {
+        res.BillDic[year].forEach(billLink => {
+            totalTabs += res.BillDic[year].length;
+            browser.tabs.create({
+                    active: false,
+                    url: billLink
+                }).then(tab => tabDic[tab.id] = year)
+                .catch(error => console.error('unable to create page for link: '+ billLink));
         });
+    }
 }
 
 function billPageUpdated(tabId, changeInfo, tabInfo) {
 
     if(!init) return;
-    if(existedTabs.includes(tabId)) return;
-    if(changeInfo.status != "complete") return;
+    if(existedTabs.includes(tabId)) return; // ignore pages that already opened before we start to fetching bills
+    if(changeInfo.status != "complete") return; // status will updated severial times
 
     console.log('detected page updated, trying to fetch bill.');
 
-    openedTabs.push(tabId);
+    openedTabs.push(tabId); // save the id to close while finished.
 
-    browser.tabs.sendMessage(
+    browser.tabs.executeScript(
         tabId,
-        { "MessageType" : "get-bill-content"}
-    ).then(parseBillData).catch(
-            error => console.error('get bill content error: '+ error)
-        );
+        {file: "/json2csv"}
+    ).then(() => {
+        browser.tabs.sendMessage(
+            tabId,
+            { 
+                "MessageType" : "get-bill-content", 
+                "TabID" : tabId 
+            }
+        ).then(parseBillData).catch(
+                error => console.error('get bill content error: '+ error)
+            );
+    }).catch(err => console.error("Execute json2csv on tab " + tabId + " error: " + err));
 }
 
 function parseBillData(billContent) {
-    var bolb = new Blob([JSON.stringify(billContent)], {type : 'application/json'});
 
-    var downloading = browser.downloads.download({
-        url: URL.createObjectURL(bolb),
-        filename: billContent.BankName + "-" + billContent.BillMonth,
-        conflictAction: 'uniquify'
-    });
+    var year = tabDic[billContent.TabID];
+    // if(!(year in yearDic)) yearDic[year] = [];
+    // yearDic[year].push(billContent.CSV);
 
-    downloading.then(() => {
-        console.log("Download completed");
-    }, () => {
-        console.log("Download failed");
-    });
 
-    if(openedTabs.length == totalTabs) {
-        browser.tabs.remove(openedTabs);
-        openedTabs = [];
-    }
+    // if(openedTabs.length >= totalTabs) {
+
+    //     var toDownload = [];
+
+    //     for(var key in yearDic) {
+    //         toDownload.push(yearDic[key]);
+    //     }
+
+        var bolb = new Blob([billContent.CSV]);
+        browser.downloads.download({
+            url: URL.createObjectURL(bolb),
+            filename: year,
+            conflictAction: 'uniquify'
+        });
+
+        // browser.tabs.remove(openedTabs);
+        // openedTabs = [];
+    
 }
 
 var existedTabs = [];
 var openedTabs = [];
 var totalTabs  = 0;
 var init = false;
+var tabDic = {};
+var yearDic = {};
 
 browser.pageAction.onClicked.addListener(startProcess);
 browser.tabs.onUpdated.addListener(billPageUpdated);
