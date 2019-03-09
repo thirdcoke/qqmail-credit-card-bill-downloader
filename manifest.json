@@ -1,8 +1,8 @@
 {
 	"manifest_version": 2,
-	"name": "Borderify",
+	"name": "QQ Mail Credit Card Bill Downloader",
 	"version": "1.0",
-	"description": "BBB",
+	"description": "This is an extension of Firefox that allows you download credit card bills as csv format.",
 	"icons": {
 		"48": "icons/border-48.png"
 	},
@@ -16,17 +16,14 @@
 	"background": {
 		"scripts": ["background.js","json2csv"]
 	},
-
 	"page_action": {
 		"browser_style": true,
 		"default_icon": {
-			"16" : "icons/border-48.png",
-			"32" : "icons/border-48.png"
+			"48" : "icons/icon-48.png"
 		},
 		"default_title": "Clip Credit Card",
 		"show_matches": ["*://mail.qq.com/*"]
 	},
-
 	"content_scripts": [
 		{
 			"matches": ["*://mail.qq.com/*"],
