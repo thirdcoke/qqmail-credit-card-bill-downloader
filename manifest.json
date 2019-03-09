@@ -14,7 +14,7 @@
 		"<all_urls>"
 	],
 	"background": {
-		"scripts": ["background.js"]
+		"scripts": ["background.js","json2csv"]
 	},
 
 	"page_action": {
